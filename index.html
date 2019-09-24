@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Keyword Wizard</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Mono&display=swap" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="./app.css">
+  </head>
+  <body>
+    <div id="topBar">
+      Keyword Wizard
+    </div>
+    <div id="sideBar">
+      <div class="sideLink" id="addDocs" onclick="addFiles()">
+        + Add Documents
+        <input id="fileInput" type="file" style="display:none" multiple>
+      </div>
+      <div class="sideLink" id="searchDocs">
+        <input type="text" id="searchDocsField" value="Search Documents">
+      </div>
+      <span id="addedDocs">
+
+      </span>
+      <div class="sideLink" id="copyAll" onclick="copyAll()">
+        Copy All +
+      </div>
+      <div class="sideLink" id="settings" onclick="showSettings()">
+        Settings
+      </div>
+    </div>
+    <div id="main">
+      <div id="docInfo">
+        <div id="docTitle"> </div>
+        <div class="textSection" id="stats"> </div>
+      </div>
+    </div>
+    <script src="./renderer.js"></script>
+  </body>
+</html>

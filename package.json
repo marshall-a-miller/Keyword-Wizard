@@ -1,0 +1,21 @@
+{
+  "productName": "Keyword Wizard",
+  "version": "1.0.0",
+  "description": "A keyword manager program for SEO",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "package-mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=assets/images/wizard-icon.icns --prune=true --out=release-builds --ignore=test-files",
+    "package-win": "electron-packager . --overwrite --platform=win32 --arch=x64 --icon=assets/images/wizard-icon.ico --prune=true --out=release-builds --ignore=test-files",
+    "package-linux": "electron-packager . --overwrite --platform=linux --arch=x64 --icon=assets/images/wizard-icon.png --prune=true --out=release-builds --ignore=test-files"
+  },
+  "author": "Marshall Miller",
+  "devDependencies": {
+    "electron": "^6.0.9",
+    "electron-packager": "^14.0.6"
+  },
+  "dependencies": {
+    "clipboardy": "^2.1.0",
+    "jquery": "^3.4.1"
+  }
+}
