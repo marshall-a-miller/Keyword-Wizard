@@ -1,7 +1,4 @@
-// This file is required by the index.html file and will
-// be executed in the renderer process for that window.
-
-// All of the Node.js APIs are available in this process.
+// Import Node JS APIs
 const $ = require('jquery')
 const fs = require('fs')
 const clipboard = require('clipboardy')
@@ -18,6 +15,7 @@ let settings = JSON.parse(fs.readFileSync(`${rootDir}assets/config-files/setting
 // Import stopWords list
 const stopWords = fs.readFileSync(`${rootDir}assets/config-files/ignore.txt`, 'utf8').split(/\s+/)
 
+// Main renderer processes
 $(document).ready(function() {
 
   // Read all files in files directory and load tabs
