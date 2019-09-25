@@ -6,16 +6,22 @@ const $ = require('jquery')
 const fs = require('fs')
 const clipboard = require('clipboardy')
 
+// Determines whether in development or release
+const dev = isDev()
+
+// Finds root directory
+const rootDir = findRoot()
+
 // Import settings
-let settings = JSON.parse(fs.readFileSync(`${process.resourcesPath}/app/assets/config-files/settings.json`, 'utf8'))
+let settings = JSON.parse(fs.readFileSync(`${rootDir}assets/config-files/settings.json`, 'utf8'))
 
 // Import stopWords list
-const stopWords = fs.readFileSync(`${process.resourcesPath}/app/assets/config-files/ignore.txt`, 'utf8').split(/\s+/)
+const stopWords = fs.readFileSync(`${rootDir}assets/config-files/ignore.txt`, 'utf8').split(/\s+/)
 
 $(document).ready(function() {
 
   // Read all files in files directory and load tabs
-  let allFiles = fs.readdirSync(`${process.resourcesPath}/app/assets/files`)
+  let allFiles = fs.readdirSync(`${rootDir}assets/files`)
   for (file in allFiles) {
     addTab(allFiles[file].replace('.json', ''))
   }
@@ -69,7 +75,7 @@ $(document).ready(function() {
       $('#addedDocs').children().each(function() {
 
         if ($(this).css('background-color') == 'rgb(34, 168, 245)') {
-          fs.unlink(`${process.resourcesPath}/app/assets/files/${$(this).text()}.json`, function (err) {
+          fs.unlink(`${rootDir}assets/files/${$(this).text()}.json`, function (err) {
             if (err) throw err
           })
           $(this).remove()
@@ -98,9 +104,7 @@ function showSettings() {
 // Updates the settings
 function updateSettings(setting) {
   settings[setting] = document.getElementById(setting).value
-  fs.writeFile(`${process.resourcesPath}/app/assets/config-files/settings.json`, JSON.stringify(settings), 'utf8', function(err) {
-    if (err) throw err
-  })
+  writeJSON(`${rootDir}assets/config-files/settings.json`, settings)
 }
 
 // Copies all keywords
@@ -108,12 +112,12 @@ function copyAll() {
   $('#addedDocs').children().css('background-color', '')
 
   // Cycle through all files
-  let allFiles = fs.readdirSync(`${process.resourcesPath}/app/assets/files`)
+  let allFiles = fs.readdirSync(`${rootDir}assets/files`)
   keywordString = ''
   for (name in allFiles) {
 
     // Loads file
-    let keywords = JSON.parse(fs.readFileSync(`${process.resourcesPath}/app/assets/files/${allFiles[name]}`, 'utf8'))
+    let keywords = JSON.parse(fs.readFileSync(`${rootDir}assets/files/${allFiles[name]}`, 'utf8'))
 
     // Creates CSV
     for (word in keywords[allFiles[name].replace('.json', '')]) {
@@ -244,9 +248,7 @@ function addFiles() {
           fullKeywords[fileName] = keywords
 
           // Write the json file
-          fs.writeFile(`${process.resourcesPath}/app/assets/files/${fileName}.json`, JSON.stringify(fullKeywords), 'utf8', function(err) {
-            if (err) throw err
-          })
+          writeJSON(`${rootDir}assets/files/${fileName}.json`, fullKeywords)
 
           // Check if document was added before
           tabNames = []
@@ -282,7 +284,7 @@ function addTab(name) {
 function displayKeywords(idTag) {
 
   // Grab keywords from proper file
-  let keywords = JSON.parse(fs.readFileSync(`${process.resourcesPath}/app/assets/files/${idTag}.json`, 'utf8'))
+  let keywords = JSON.parse(fs.readFileSync(`${rootDir}assets/files/${idTag}.json`, 'utf8'))
 
   // Set document title
   $('#docTitle').text(idTag)
@@ -309,15 +311,13 @@ function displayKeywords(idTag) {
 function deleteWord(word, file, elem) {
 
   // Grab keywords from proper file
-  let keywords = JSON.parse(fs.readFileSync(`${process.resourcesPath}/app/assets/files/${file}.json`, 'utf8'))
+  let keywords = JSON.parse(fs.readFileSync(`${rootDir}assets/files/${file}.json`, 'utf8'))
 
   // Remove word from file
   delete keywords[file][word]
 
   // Write the json file
-  fs.writeFile(`${process.resourcesPath}/app/assets/files/${file}.json`, JSON.stringify(keywords), 'utf8', function(err) {
-    if (err) throw err
-  })
+  writeJSON(`${rootDir}assets/files/${file}.json`, keywords)
 
   // Delete the target element
   elem.remove()
@@ -326,11 +326,11 @@ function deleteWord(word, file, elem) {
 // Sorts values of dictionary
 function order(obj) {
     items = Object.keys(obj).map(function(key) {
-        return [key, obj[key]];
-    });
+        return [key, obj[key]]
+    })
     items.sort(function(first, second) {
-        return second[1] - first[1];
-    });
+        return second[1] - first[1]
+    })
     sorted_obj={}
     $.each(items, function(k, v) {
         use_key = v[0]
@@ -338,4 +338,33 @@ function order(obj) {
         sorted_obj[use_key] = use_value
     })
     return(sorted_obj)
+}
+
+// Determines whether in developer mode or not based on file structure
+function isDev() {
+
+  // Assets will be in a non-root folder in production
+  return fs.existsSync('assets')
+
+}
+
+// Returns the root directory of the application
+function findRoot() {
+  if (dev) {
+
+    // Developer mode means all files are based in root
+    return ''
+
+  } else {
+
+    // Production files in Resources
+    return process.resourcesPath + '/app/'
+
+  }
+}
+
+// Writes to JSON file
+function writeJSON(path, file) {
+
+  fs.writeFileSync(path, JSON.stringify(file), 'utf8')
 }
