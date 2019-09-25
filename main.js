@@ -17,8 +17,7 @@ function createWindow () {
     titleBarStyle: 'hidden',
     resizable: false,
     alwaysOnTop: false,
-    fullscreen: false,
-    opacity: 0.95,
+    fullscreen: false
   })
 
   // and load index.html
