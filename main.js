@@ -18,7 +18,6 @@ function createWindow () {
     resizable: false,
     alwaysOnTop: false,
     fullscreen: false,
-    opacity: 0.95,
   })
 
   // and load index.html
