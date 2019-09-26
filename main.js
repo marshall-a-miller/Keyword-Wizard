@@ -1,6 +1,5 @@
 // Modules to control application life and create native browser window
-const {app, BrowserWindow, Menu, globalShortcut, Notification} = require('electron')
-const path = require('path')
+const {app, BrowserWindow} = require('electron')
 
 // Keep a global reference of the window object
 let mainWindow
