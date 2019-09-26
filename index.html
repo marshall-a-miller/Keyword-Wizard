@@ -6,13 +6,15 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto+Mono&display=swap" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <link rel="stylesheet" href="./app.css">
+    <script src="./assets.js"></script>
+    <script src="./renderer.js"></script>
   </head>
   <body>
     <div id="topBar">
       Keyword Wizard
     </div>
     <div id="sideBar">
-      <div class="sideLink" id="addDocs" onclick="addFiles()">
+      <div class="sideLink" id="addDocs">
         + Add Documents
         <input id="fileInput" type="file" style="display:none" multiple>
       </div>
@@ -22,10 +24,10 @@
       <span id="addedDocs">
 
       </span>
-      <div class="sideLink" id="copyAll" onclick="copyAll()">
+      <div class="sideLink" id="copyAll">
         Copy All +
       </div>
-      <div class="sideLink" id="settings" onclick="showSettings()">
+      <div class="sideLink" id="settings">
         Settings
       </div>
     </div>
@@ -35,6 +37,5 @@
         <div class="textSection" id="stats"> </div>
       </div>
     </div>
-    <script src="./renderer.js"></script>
   </body>
 </html>

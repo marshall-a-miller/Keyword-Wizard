@@ -10,16 +10,16 @@ const dev = isDev()
 const rootDir = findRoot()
 
 // Import settings
-let settings = JSON.parse(fs.readFileSync(`${rootDir}assets/config-files/settings.json`, 'utf8'))
+let settings = readJSON(`assets/config-files/settings.json`)
 
 // Import stopWords list
-const stopWords = fs.readFileSync(`${rootDir}assets/config-files/ignore.txt`, 'utf8').split(/\s+/)
+const stopWords = readFile(`assets/config-files/ignore.txt`).split(/\s+/)
 
 // Main renderer processes
 $(document).ready(function() {
 
   // Read all files in files directory and load tabs
-  let allFiles = fs.readdirSync(`${rootDir}assets/files`)
+  let allFiles = readDir(`assets/files`)
   for (file in allFiles) {
     addTab(allFiles[file].replace('.json', ''))
   }
@@ -73,9 +73,7 @@ $(document).ready(function() {
       $('#addedDocs').children().each(function() {
 
         if ($(this).css('background-color') == 'rgb(34, 168, 245)') {
-          fs.unlink(`${rootDir}assets/files/${$(this).text()}.json`, function (err) {
-            if (err) throw err
-          })
+          deleteFile(`assets/files/${$(this).text()}.json`)
           $(this).remove()
           $('#stats').empty()
           $('#docTitle').text(' ')
@@ -83,198 +81,196 @@ $(document).ready(function() {
       })
     }
   })
-})
 
-// Shows the settings
-function showSettings() {
-  $('#docTitle').text('Settings - only maintained by newly imported files')
-  $('#stats').empty()
-  $('#settings').css({'background-color': '#22a8f5'})
-  $('#addedDocs').children().css('background-color', '')
-  $('#stats').text('\n')
+  // Shows the settings
+  $('#settings').on('click', function() {
+    $('#docTitle').text('Settings - only maintained by newly imported files')
+    $('#stats').empty()
+    $('#settings').css({'background-color': '#22a8f5'})
+    $('#addedDocs').children().css('background-color', '')
+    $('#stats').text('\n')
 
-  // Load Settings
-  for (setting in settings) {
-    $('#stats').append(`<span>${setting[0].toUpperCase() + setting.replace(/([A-Z])/g, ' $1').slice(1)}: <input type="number" id="${setting}" value="${settings[setting]}" onchange="updateSettings(this.id)"></span>\n\n`)
-  }
-}
+    // Load Settings
+    for (setting in settings) {
 
-// Updates the settings
-function updateSettings(setting) {
-  settings[setting] = document.getElementById(setting).value
-  writeJSON(`${rootDir}assets/config-files/settings.json`, settings)
-}
+      $('#stats').append(`<span>${setting[0].toUpperCase() + setting.replace(/([A-Z])/g, ' $1').slice(1)}: <input type="number" id="${setting}" value="${settings[setting]}" onchange="updateSettings(this.id)"></span>\n\n`)
+    }
+  })
 
-// Copies all keywords
-function copyAll() {
-  $('#addedDocs').children().css('background-color', '')
+  // Copies all keywords
+  $('#copyAll').on('click', function() {
 
-  // Cycle through all files
-  let allFiles = fs.readdirSync(`${rootDir}assets/files`)
-  keywordString = ''
-  for (name in allFiles) {
+    $('#addedDocs').children().css('background-color', '')
 
-    // Loads file
-    let keywords = JSON.parse(fs.readFileSync(`${rootDir}assets/files/${allFiles[name]}`, 'utf8'))
+    // Cycle through all files
+    let allFiles = fs.readdirSync(`${rootDir}assets/files`)
+    keywordString = ''
+    for (name in allFiles) {
 
-    // Creates CSV
-    for (word in keywords[allFiles[name].replace('.json', '')]) {
-      keywordString += word + ', '
+      // Loads file
+      let keywords = JSON.parse(fs.readFileSync(`${rootDir}assets/files/${allFiles[name]}`, 'utf8'))
+
+      // Creates CSV
+      for (word in keywords[allFiles[name].replace('.json', '')]) {
+        keywordString += word + ', '
+      }
+
     }
 
-  }
+    // Removes extra ', '
+    keywordString = keywordString.slice(0, -2)
 
-  // Removes extra ', '
-  keywordString = keywordString.slice(0, -2)
+    // Copy text to clipboard
+    clipboard.writeSync(keywordString)
+  })
 
-  // Copy text to clipboard
-  clipboard.writeSync(keywordString)
-}
+  // Triggers on #addDocs clicked
+  $('#addDocs').on('click', function() {
 
-// Triggers on #addDocs clicked
-function addFiles() {
+    // Artificially clicks invisible file input for user and stops bubbling
+    $('#fileInput').click(function(e) { e.stopPropagation() })
+    $('#fileInput').trigger('click')
 
-  // Artificially clicks invisible file input for user and stops bubbling
-  $('#fileInput').click(function(e) { e.stopPropagation() })
-  $('#fileInput').trigger('click')
+    // When a file is inputted and the value of the field changes
+    $('#fileInput').change(function() {
 
-  // When a file is inputted and the value of the field changes
-  $('#fileInput').change(function() {
+      // Put all of the imported files into an array
+      let importedFiles = $('#fileInput')[0].files
 
-    // Put all of the imported files into an array
-    let importedFiles = $('#fileInput')[0].files
+      // Cycle through the files
+      for (let file = 0; file < importedFiles.length; file++) {
 
-    // Cycle through the files
-    for (let file = 0; file < importedFiles.length; file++) {
+        // If the file has any contents
+        if (importedFiles[file]) {
 
-      // If the file has any contents
-      if (importedFiles[file]) {
+          // Record the name of the file
+          let fileName = importedFiles[file].name
 
-        // Record the name of the file
-        let fileName = importedFiles[file].name
+          // Create new built-in FileReader Object
+          let reader = new FileReader()
+          reader.readAsText(importedFiles[file], "UTF-8")
 
-        // Create new built-in FileReader Object
-        let reader = new FileReader()
-        reader.readAsText(importedFiles[file], "UTF-8")
+          // Once the file has loaded as an event
+          reader.onload = function (evt) {
 
-        // Once the file has loaded as an event
-        reader.onload = function (evt) {
+            // Prepare loaded text and remove scripts, styles, and images that may cause issues
+            let loadedText = evt.target.result.replace(/<script[^>]*?>.*?<\/script>/gs, '')
+            loadedText = loadedText.replace(/<style[^>]*?>.*?<\/style>/gs, '')
+            loadedText = loadedText.replace(/<img[^>]*?>/gs, '')
 
-          // Prepare loaded text and remove scripts, styles, and images that may cause issues
-          let loadedText = evt.target.result.replace(/<script[^>]*?>.*?<\/script>/gs, '')
-          loadedText = loadedText.replace(/<style[^>]*?>.*?<\/style>/gs, '')
-          loadedText = loadedText.replace(/<img[^>]*?>/gs, '')
+            // Set the text to an HTML object so we can strip the content text
+            let htmlCode = document.createElement('span')
+            htmlCode.setAttribute('id', 'htmlCode')
+            htmlCode.innerHTML = loadedText
+            allWords = htmlCode.innerText.split(/\W+/)
 
-          // Set the text to an HTML object so we can strip the content text
-          let htmlCode = document.createElement('span')
-          htmlCode.setAttribute('id', 'htmlCode')
-          htmlCode.innerHTML = loadedText
-          allWords = htmlCode.innerText.split(/\W+/)
+            // First and last item are always "" so pop them out
+            allWords.shift()
+            allWords.pop()
 
-          // First and last item are always "" so pop them out
-          allWords.shift()
-          allWords.pop()
+            // Makes all words lowercase and removes numbers
+            allWords = allWords.map(word => word.toLowerCase())
+            allWords = allWords.filter(word => /\D+?/.test(word))
 
-          // Makes all words lowercase and removes numbers
-          allWords = allWords.map(word => word.toLowerCase())
-          allWords = allWords.filter(word => /\D+?/.test(word))
+            // Remove stop words from list
+            stopWords.forEach(stopWord => {
+              // Filter each stop word from content word list
+              allWords = allWords.filter(word => word.toLowerCase() != stopWord)
+            })
 
-          // Remove stop words from list
-          stopWords.forEach(stopWord => {
-            // Filter each stop word from content word list
-            allWords = allWords.filter(word => word.toLowerCase() != stopWord)
-          })
+            // Creates a block of text containing all words and phrases
+            pageText = allWords.join(' ')
 
-          // Creates a block of text containing all words and phrases
-          pageText = allWords.join(' ')
+            // Create keyword list
+            let keywords = {}
 
-          // Create keyword list
-          let keywords = {}
+            // Find phrases starting with largest
+            for (let phraseLength = settings.maxPhraseLength; phraseLength > settings.minPhraseLength - 1; phraseLength--) {
 
-          // Find phrases starting with largest
-          for (let phraseLength = settings.maxPhraseLength; phraseLength > settings.minPhraseLength - 1; phraseLength--) {
+              // For each index position
+              for (let i = 0; i < allWords.length - phraseLength; i++) {
 
-            // For each index position
-            for (let i = 0; i < allWords.length - phraseLength; i++) {
+                // Assemble phrase
+                let phrase = ''
+                for (let j = 0; j < phraseLength; j++) {
+                  phrase += allWords[i + j] + ' '
+                }
+                phrase = phrase.slice(0, -1)
 
-              // Assemble phrase
-              let phrase = ''
-              for (let j = 0; j < phraseLength; j++) {
-                phrase += allWords[i + j] + ' '
-              }
-              phrase = phrase.slice(0, -1)
+                // Check count of phrase in string
+                let gPhrase = new RegExp(' ' + phrase + ' ', 'g')
+                let keywordCount = (pageText.match(gPhrase) || []).length
+                if (keywordCount > settings.minimumOccurences - 1) {
 
-              // Check count of phrase in string
-              let gPhrase = new RegExp(' ' + phrase + ' ', 'g')
-              let keywordCount = (pageText.match(gPhrase) || []).length
-              if (keywordCount > settings.minimumOccurences - 1) {
-
-                // Add keyword to list and remove found phrases
-                keywords[phrase] = keywordCount
-                pageText.replace(phrase, '')
-                pageText.replace('  ', ' ')
-                allWords = pageText.split(' ')
-              }
-            }
-          }
-
-          // Order keywords
-          keywords = order(keywords)
-
-          // Find phrases that are part of another phrase
-          for (word in keywords) {
-
-            // Check if it's a single word
-            //if (!word.includes(' ')) {
-
-              // Test word against every other word
-              for (testWord in keywords) {
-                if (testWord.includes(word) && testWord != word) {
-                  delete keywords[word]
+                  // Add keyword to list and remove found phrases
+                  keywords[phrase] = keywordCount
+                  pageText.replace(phrase, '')
+                  pageText.replace('  ', ' ')
+                  allWords = pageText.split(' ')
                 }
               }
-            //}
+            }
+
+            // Order keywords
+            keywords = order(keywords)
+
+            // Find phrases that are part of another phrase
+            for (word in keywords) {
+
+              // Check if it's a single word
+              //if (!word.includes(' ')) {
+
+                // Test word against every other word
+                for (testWord in keywords) {
+                  if (testWord.includes(word) && testWord != word) {
+                    delete keywords[word]
+                  }
+                }
+              //}
+            }
+
+            // Turn values to dicts
+            for (key in keywords) {
+              keywords[key] = {"count": keywords[key]}
+            }
+
+            // Append data to dictionary
+            let fullKeywords = {}
+            fullKeywords[fileName] = keywords
+
+            // Write the json file
+            writeJSON(`${rootDir}assets/files/${fileName}.json`, fullKeywords)
+
+            // Check if document was added before
+            tabNames = []
+            $('#addedDocs').children().each(function() {
+              tabNames.push($(this).text())
+            })
+            if (!tabNames.includes(fileName)) {
+
+              // Call function to append words to side tab
+              addTab(fileName)
+            }
+
           }
 
-          // Turn values to dicts
-          for (key in keywords) {
-            keywords[key] = {"count": keywords[key]}
+          // Report error reading file
+          reader.onerror = function (evt) {
+
+            // Handling
+            console.log(evt)
           }
-
-          // Append data to dictionary
-          let fullKeywords = {}
-          fullKeywords[fileName] = keywords
-
-          // Write the json file
-          writeJSON(`${rootDir}assets/files/${fileName}.json`, fullKeywords)
-
-          // Check if document was added before
-          tabNames = []
-          $('#addedDocs').children().each(function() {
-            tabNames.push($(this).text())
-          })
-          if (!tabNames.includes(fileName)) {
-
-            // Call function to append words to side tab
-            addTab(fileName)
-          }
-
-        }
-
-        // Report error reading file
-        reader.onerror = function (evt) {
-
-          // Handling
-          console.log(evt)
         }
       }
-    }
 
+    })
   })
-}
+
+})
 
 // Add file tab to sideBar
 function addTab(name) {
+
   $('#addedDocs').prepend(`<div class="sideLink" id="${name}" onclick="displayKeywords(this.id)">${name}</div>`)
 }
 
@@ -305,64 +301,24 @@ function displayKeywords(idTag) {
   document.getElementById(idTag).style.backgroundColor = '#22a8f5'
 }
 
+// Updates the settings
+function updateSettings(setting) {
+  settings[setting] = document.getElementById(setting).value
+  writeJSON(`${rootDir}assets/config-files/settings.json`, settings)
+}
+
 // Deletes a target word from json file
 function deleteWord(word, file, elem) {
 
   // Grab keywords from proper file
-  let keywords = JSON.parse(fs.readFileSync(`${rootDir}assets/files/${file}.json`, 'utf8'))
+  let keywords = readJSON(`assets/files/${file}.json`)
 
   // Remove word from file
   delete keywords[file][word]
 
   // Write the json file
-  writeJSON(`${rootDir}assets/files/${file}.json`, keywords)
+  writeJSON(`assets/files/${file}.json`, keywords)
 
   // Delete the target element
   elem.remove()
-}
-
-// Sorts values of dictionary
-function order(obj) {
-    items = Object.keys(obj).map(function(key) {
-        return [key, obj[key]]
-    })
-    items.sort(function(first, second) {
-        return second[1] - first[1]
-    })
-    sorted_obj={}
-    $.each(items, function(k, v) {
-        use_key = v[0]
-        use_value = v[1]
-        sorted_obj[use_key] = use_value
-    })
-    return(sorted_obj)
-}
-
-// Determines whether in developer mode or not based on file structure
-function isDev() {
-
-  // Assets will be in a non-root folder in production
-  return fs.existsSync('assets')
-
-}
-
-// Returns the root directory of the application
-function findRoot() {
-  if (dev) {
-
-    // Developer mode means all files are based in root
-    return ''
-
-  } else {
-
-    // Production files in Resources
-    return process.resourcesPath + '/app/'
-
-  }
-}
-
-// Writes to JSON file
-function writeJSON(path, file) {
-
-  fs.writeFileSync(path, JSON.stringify(file), 'utf8')
 }
