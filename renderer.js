@@ -86,7 +86,7 @@ $(document).ready(function() {
   $('#settings').on('click', function() {
     $('#docTitle').text('Settings - only maintained by newly imported files')
     $('#stats').empty()
-    $('#settings').css({'background-color': '#22a8f5'})
+    $('#settings').css({'background-color': '#bf3dff'})
     $('#addedDocs').children().css('background-color', '')
     $('#stats').text('\n')
 
@@ -298,7 +298,7 @@ function displayKeywords(idTag) {
   // Change the selected tab's color to active
   $('#settings').css({'background-color': ''})
   $('#addedDocs').children().css('background-color', '')
-  document.getElementById(idTag).style.backgroundColor = '#22a8f5'
+  document.getElementById(idTag).style.backgroundColor = '#bf3dff'
 }
 
 // Updates the settings
